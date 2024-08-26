@@ -9,4 +9,5 @@ python-dotenv
 networkx
 pytest
 pytest-asyncio
-SQLAlchemy
+sqlalchemy
+sqlalchemy[asyncio]
