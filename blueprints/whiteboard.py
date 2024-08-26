@@ -1,5 +1,6 @@
 from sanic import Blueprint, response
 from sanic.log import logger
+
 from models import Whiteboard
 
 bp = Blueprint("whiteboard", url_prefix="/whiteboard")
@@ -39,7 +40,6 @@ async def update_whiteboard_handler(request, whiteboard_id):
 # Delete a whiteboard
 @bp.route("/<whiteboard_id:int>/delete", methods=["POST"])
 async def delete_whiteboard_handler(request, whiteboard_id):
-
     async with request.ctx.session.begin():
         whiteboard = await request.ctx.session.get(Whiteboard, whiteboard_id)
         whiteboard.delete()

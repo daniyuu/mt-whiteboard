@@ -1,16 +1,16 @@
+from contextvars import ContextVar
+
 from sanic import Sanic, response
 from sanic.log import logger
 from sanic.request import Request
 from sanic_cors import CORS
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
-from contextvars import ContextVar
-from models import Whiteboard, Node, Edge
 
-from blueprints.whiteboard import bp as whiteboard_bp
-from blueprints.node import bp as node_bp
 from blueprints.edge import bp as edge_bp
-
+from blueprints.node import bp as node_bp
+from blueprints.whiteboard import bp as whiteboard_bp
+from models import Whiteboard, Node, Edge
 
 app = Sanic(__name__)
 CORS(app)

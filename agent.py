@@ -62,4 +62,3 @@ class ChatGPTAgent:
         ]
         async for chunk in self.model.astream(_messages):
             yield chunk.content
-
