@@ -8,6 +8,8 @@ from contextvars import ContextVar
 from models import Whiteboard, Node, Edge
 
 from blueprints.whiteboard import bp as whiteboard_bp
+from blueprints.node import bp as node_bp
+from blueprints.edge import bp as edge_bp
 
 
 app = Sanic(__name__)
@@ -41,6 +43,8 @@ async def setup_db(app, loop):
 
 
 app.blueprint(whiteboard_bp)
+app.blueprint(node_bp)
+app.blueprint(edge_bp)
 
 
 @app.route("/health", methods=["GET"])
