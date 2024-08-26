@@ -1,5 +1,6 @@
 from sanic import Blueprint, response
 from sanic.log import logger
+
 from models import Edge
 
 bp = Blueprint("edge", url_prefix="/edge")
@@ -51,7 +52,6 @@ async def update_edge_handler(request, edge_id):
 
 @bp.route("/<edge_id:int>/delete", methods=["POST"])
 async def delete_edge_handler(request, edge_id):
-
     async with request.ctx.session.begin():
         edge = await request.ctx.session.get(Edge, edge_id)
         edge.delete()

@@ -1,5 +1,6 @@
 from sanic import Blueprint, response
 from sanic.log import logger
+
 from models import Node
 
 bp = Blueprint("node", url_prefix="/node")
@@ -69,7 +70,6 @@ async def update_node_handler(request, node_id):
 # Delete a node
 @bp.route("/<node_id:int>/delete", methods=["POST"])
 async def delete_node_handler(request, node_id):
-
     async with request.ctx.session.begin():
         node = await request.ctx.session.get(Node, node_id)
         node.delete()
