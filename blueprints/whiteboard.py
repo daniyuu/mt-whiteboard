@@ -1,4 +1,3 @@
-from sanic.response import json
 from sanic import Blueprint, response
 from sanic.log import logger
 from models import Whiteboard
