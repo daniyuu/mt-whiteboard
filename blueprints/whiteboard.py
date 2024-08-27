@@ -1,7 +1,8 @@
 from sanic import Blueprint, response
 from sanic.log import logger
 from sqlalchemy.future import select
-from models import Whiteboard
+from models import Whiteboard, Node
+from agent import get_related_questions
 
 bp = Blueprint("whiteboard", url_prefix="/whiteboard")
 
@@ -69,3 +70,35 @@ async def get_all_whiteboards_handler(request):
     return response.json(
         {"whiteboards": [whiteboard.to_dict() for whiteboard in whiteboards]}
     )
+
+
+# Get related questions about current whiteboard
+@bp.route("/<whiteboard_id:int>/questions", methods=["POST"])
+async def get_related_questions_handler(request, whiteboard_id):
+
+    stmt = (
+        select(Node)
+        .where(Node.whiteboard_id == whiteboard_id and Node.deleted_at == None)
+        .order_by(Node.updated_at.desc())
+    )
+
+    nodes = await request.ctx.session.execute(stmt)
+
+    nodes = nodes.scalars().all()
+    chat_history = []
+    for node in nodes:
+        chat_history.append(
+            {
+                "content": node.content,
+                "sender": node.sender,
+                "timestamp": node.updated_at,
+            }
+        )
+
+    chat_history_text = "\n".join(
+        [f"{msg['sender']}: {msg['content']}" for msg in chat_history]
+    )
+
+    related_questions = get_related_questions(chat_history_text)
+
+    return response.json({"related_questions": related_questions})
