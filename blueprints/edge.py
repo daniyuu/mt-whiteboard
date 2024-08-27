@@ -1,6 +1,6 @@
 from sanic import Blueprint, response
 from sanic.log import logger
-
+from sqlalchemy import select
 from models import Edge
 
 bp = Blueprint("edge", url_prefix="/edge")
@@ -73,9 +73,8 @@ async def get_edge_handler(request, edge_id):
 @bp.route("/all/<whiteboard_id:int>", methods=["GET"])
 async def get_all_edges_handler(request, whiteboard_id):
     async with request.ctx.session.begin():
-        edges = await request.ctx.session.execute(
-            Edge.select().where(Edge.whiteboard_id == whiteboard_id)
-        )
+        stmt = select(Edge).where(Edge.whiteboard_id == whiteboard_id)
+        edges = await request.ctx.session.execute(stmt)
         edges = edges.scalars().all()
 
     return response.json({"edges": [edge.to_dict() for edge in edges]})
