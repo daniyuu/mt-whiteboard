@@ -1,6 +1,6 @@
 from sanic import Blueprint, response
 from sanic.log import logger
-
+from sqlalchemy import select
 from models import Node
 
 bp = Blueprint("node", url_prefix="/node")
@@ -72,7 +72,7 @@ async def update_node_handler(request, node_id):
 async def delete_node_handler(request, node_id):
     async with request.ctx.session.begin():
         node = await request.ctx.session.get(Node, node_id)
-        node.delete()
+        await node.delete(request.ctx.session)
 
     return response.json({"id": node.id})
 
@@ -92,9 +92,8 @@ async def get_node_handler(request, node_id):
 @bp.route("/all/<whiteboard_id:int>", methods=["GET"])
 async def get_all_nodes_handler(request, whiteboard_id):
     async with request.ctx.session.begin():
-        nodes = await request.ctx.session.execute(
-            Node.select().where(Node.whiteboard_id == whiteboard_id)
-        )
+        stmt = select(Node).where(Node.whiteboard_id == whiteboard_id)
+        nodes = await request.ctx.session.execute(stmt)
         nodes = nodes.scalars().all()
 
     return response.json({"nodes": [node.to_dict() for node in nodes]})
