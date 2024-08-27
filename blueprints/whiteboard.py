@@ -1,6 +1,6 @@
 from sanic import Blueprint, response
 from sanic.log import logger
-
+from sqlalchemy.future import select
 from models import Whiteboard
 
 bp = Blueprint("whiteboard", url_prefix="/whiteboard")
@@ -42,7 +42,7 @@ async def update_whiteboard_handler(request, whiteboard_id):
 async def delete_whiteboard_handler(request, whiteboard_id):
     async with request.ctx.session.begin():
         whiteboard = await request.ctx.session.get(Whiteboard, whiteboard_id)
-        whiteboard.delete()
+        await whiteboard.delete(request.ctx.session)
 
     return response.json({"id": whiteboard.id})
 
@@ -62,7 +62,8 @@ async def get_whiteboard_handler(request, whiteboard_id):
 @bp.route("/all", methods=["GET"])
 async def get_all_whiteboards_handler(request):
     async with request.ctx.session.begin():
-        whiteboards = await request.ctx.session.execute(Whiteboard.select())
+        stmt = select(Whiteboard)
+        whiteboards = await request.ctx.session.execute(stmt)
         whiteboards = whiteboards.scalars().all()
 
     return response.json(
