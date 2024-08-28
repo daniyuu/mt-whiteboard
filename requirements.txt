@@ -10,3 +10,4 @@ networkx
 pytest
 pytest-asyncio
 sqlalchemy[asyncio]
+aiofiles

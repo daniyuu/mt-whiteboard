@@ -1,0 +1,26 @@
+{
+    "graph": {
+        "nodes": [
+            {
+                "id": "uuid_1",
+                "type": "text",
+                "content": "Updated Content",
+                "status": "inactive",
+                "created_by": "user",
+                "extra_metadata": {},
+                "ui_attributes": {
+                    "position": {
+                        "x": 100,
+                        "y": 100
+                    }
+                }
+            }
+        ],
+        "edges": [
+            {
+                "extra_metadata": {},
+                "ui_attributes": {}
+            }
+        ]
+    }
+}
