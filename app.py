@@ -1,16 +1,14 @@
 from contextvars import ContextVar
+
 from sanic import Sanic, response
 from sanic.log import logger
 from sanic.request import Request
 from sanic_cors import CORS
-
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 
-from blueprints.edge import bp as edge_bp
-from blueprints.node import bp as node_bp
 from blueprints.whiteboard import bp as whiteboard_bp
-from models import Whiteboard, Node, Edge
+from models import Whiteboard
 
 app = Sanic(__name__)
 CORS(app)
@@ -38,13 +36,17 @@ async def close_session(request, response):
 async def setup_db(app, loop):
     async with bind.begin() as conn:
         await conn.run_sync(Whiteboard.metadata.create_all)
-        await conn.run_sync(Node.metadata.create_all)
-        await conn.run_sync(Edge.metadata.create_all)
+
+
+@app.listener("before_server_start")
+async def init_whiteboard_data_folder(app, loop):
+    import os
+
+    if not os.path.exists("whiteboard_data"):
+        os.makedirs("whiteboard_data")
 
 
 app.blueprint(whiteboard_bp)
-app.blueprint(node_bp)
-app.blueprint(edge_bp)
 
 
 @app.route("/health", methods=["GET"])

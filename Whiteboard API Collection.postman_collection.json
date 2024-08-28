@@ -1,7 +1,7 @@
 {
 	"info": {
-		"_postman_id": "a56e6b44-d427-4831-ab1f-03a86ca4fce5",
-		"name": "Whiteboard API Collection",
+		"_postman_id": "19031737-3138-4bef-a8a3-0c0317b93fd2",
+		"name": "Whiteboard API Collection V2",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "209476"
 	},
@@ -35,7 +35,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n  \"name\": \"My Whiteboard\"\n}"
+					"raw": "{\n    \"id\":\"test_id\",\n    \"name\": \"My Whiteboard\"\n}"
 				},
 				"url": {
 					"raw": "{{base_url}}/whiteboard/create",
@@ -62,7 +62,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n  \"name\": \"Updated Whiteboard\"\n}"
+					"raw": "{\n  \"name\": \"whiteboard\"\n}"
 				},
 				"url": {
 					"raw": "{{base_url}}/whiteboard/{{whiteboard_id}}/update",
@@ -128,233 +128,6 @@
 					"path": [
 						"whiteboard",
 						"all"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Create Node",
-			"request": {
-				"method": "POST",
-				"header": [
-					{
-						"key": "Content-Type",
-						"value": "application/json"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n  \"whiteboard_id\": {{whiteboard_id}},\n  \"content\": \"Node Content\",\n  \"status\": \"active\",\n  \"created_by\": \"User\",\n  \"extra_metadata\": {},\n  \"ui_attributes\": {}\n}"
-				},
-				"url": {
-					"raw": "{{base_url}}/node/create",
-					"host": [
-						"{{base_url}}"
-					],
-					"path": [
-						"node",
-						"create"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Update Node",
-			"request": {
-				"method": "POST",
-				"header": [
-					{
-						"key": "Content-Type",
-						"value": "application/json"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n  \"content\": \"Updated Content\",\n  \"status\": \"inactive\",\n  \"extra_metadata\": {},\n  \"ui_attributes\": {}\n}"
-				},
-				"url": {
-					"raw": "{{base_url}}/node/{{node_id}}/update",
-					"host": [
-						"{{base_url}}"
-					],
-					"path": [
-						"node",
-						"{{node_id}}",
-						"update"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Delete Node",
-			"request": {
-				"method": "POST",
-				"header": [],
-				"url": {
-					"raw": "{{base_url}}/node/{{node_id}}/delete",
-					"host": [
-						"{{base_url}}"
-					],
-					"path": [
-						"node",
-						"{{node_id}}",
-						"delete"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Get Node",
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": "{{base_url}}/node/{{node_id}}",
-					"host": [
-						"{{base_url}}"
-					],
-					"path": [
-						"node",
-						"{{node_id}}"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Get All Nodes for Whiteboard",
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": "{{base_url}}/node/all/{{whiteboard_id}}",
-					"host": [
-						"{{base_url}}"
-					],
-					"path": [
-						"node",
-						"all",
-						"{{whiteboard_id}}"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Create Edge",
-			"request": {
-				"method": "POST",
-				"header": [
-					{
-						"key": "Content-Type",
-						"value": "application/json"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n  \"whiteboard_id\": {{whiteboard_id}},\n  \"source_id\": 1,\n  \"target_id\": 2,\n  \"extra_metadata\": {},\n  \"ui_attributes\": {}\n}"
-				},
-				"url": {
-					"raw": "{{base_url}}/edge/create",
-					"host": [
-						"{{base_url}}"
-					],
-					"path": [
-						"edge",
-						"create"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Update Edge",
-			"request": {
-				"method": "POST",
-				"header": [
-					{
-						"key": "Content-Type",
-						"value": "application/json"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n  \"extra_metadata\": {},\n  \"ui_attributes\": {}\n}"
-				},
-				"url": {
-					"raw": "{{base_url}}/edge/:edge_id/update",
-					"host": [
-						"{{base_url}}"
-					],
-					"path": [
-						"edge",
-						":edge_id",
-						"update"
-					],
-					"variable": [
-						{
-							"key": "edge_id"
-						}
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Delete Edge",
-			"request": {
-				"method": "POST",
-				"header": [],
-				"url": {
-					"raw": "{{base_url}}/edge/{{edge_id}}/delete",
-					"host": [
-						"{{base_url}}"
-					],
-					"path": [
-						"edge",
-						"{{edge_id}}",
-						"delete"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Get Edge",
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": "{{base_url}}/edge/{{edge_id}}",
-					"host": [
-						"{{base_url}}"
-					],
-					"path": [
-						"edge",
-						"{{edge_id}}"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Get All Edges for Whiteboard",
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": "{{base_url}}/edge/all/{{whiteboard_id}}",
-					"host": [
-						"{{base_url}}"
-					],
-					"path": [
-						"edge",
-						"all",
-						"{{whiteboard_id}}"
 					]
 				}
 			},
