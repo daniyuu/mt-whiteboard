@@ -6,7 +6,7 @@ from agent import ChatGPTAgent, get_related_questions
 @pytest.mark.asyncio
 async def test_chat():
     messages = [
-        {"role": "human", "content": "Hi"},
+        {"sender": "human", "content": "Hi"},
     ]
     agent = ChatGPTAgent()
     reply = agent.chat(messages)
@@ -16,7 +16,7 @@ async def test_chat():
 @pytest.mark.asyncio
 async def test_chat_streaming():
     messages = [
-        {"role": "human", "content": "Hi"},
+        {"sender": "human", "content": "Hi"},
     ]
     agent = ChatGPTAgent()
     reply = agent.chat_streaming(messages)
