@@ -7,10 +7,35 @@ from sanic.log import logger
 from shortuuid import uuid
 from sqlalchemy.future import select
 
-from agent import get_related_questions
+from agent import get_related_questions, get_related_insights, get_answer
 from models import Whiteboard
 
 bp = Blueprint("whiteboard", url_prefix="/whiteboard")
+
+
+# sample whiteboard data
+# data = {
+#     "name": "whiteboard",
+#     "ui_attributes": {"avatar": "x0fdsafadsrewreafdsfda"},
+#     "data": {
+#         "graph": {
+#             "nodes": [
+#                 {
+#                     "id": "uuid_1",
+#                     "type": "text",
+#                     "content": "Updated Content",
+#                     "status": "inactive",
+#                     "created_by": "user",
+#                     "extra_metadata": {},
+#                     "ui_attributes": {
+#                         "position": {"x": 100, "y": 100},
+#                     },
+#                 }
+#             ],
+#             "edges": [{"extra_metadata": {}, "ui_attributes": {}}],
+#         }
+#     },
+# }
 
 
 # Create a whiteboard
@@ -108,10 +133,7 @@ async def get_all_whiteboards_handler(request):
     )
 
 
-# Get related questions about current whiteboard
-@bp.route("/<whiteboard_id:int>/questions", methods=["POST"])
-async def get_related_questions_handler(request, whiteboard_id):
-    # get chat history from whiteboard_data json file
+async def get_chat_history(whiteboard_id: str):
     async with aiofiles.open(f"whiteboard_data/{whiteboard_id}.json", "r") as f:
         data = await f.read()
 
@@ -128,6 +150,15 @@ async def get_related_questions_handler(request, whiteboard_id):
             }
         )
 
+    return chat_history
+
+
+# Get related questions about current whiteboard
+@bp.route("/<whiteboard_id:str>/questions", methods=["POST"])
+async def get_related_questions_handler(request, whiteboard_id):
+
+    chat_history = await get_chat_history(whiteboard_id)
+
     chat_history_text = "\n".join(
         [f"{msg['sender']}: {msg['content']}" for msg in chat_history]
     )
@@ -136,26 +167,24 @@ async def get_related_questions_handler(request, whiteboard_id):
 
     return response.json({"related_questions": related_questions})
 
-    # sample data
-    # data = {
-    #     "name": "whiteboard",
-    #     "ui_attributes": {"avatar": "x0fdsafadsrewreafdsfda"},
-    #     "data": {
-    #         "graph": {
-    #             "nodes": [
-    #                 {
-    #                     "id": "uuid_1",
-    #                     "type": "text",
-    #                     "content": "Updated Content",
-    #                     "status": "inactive",
-    #                     "created_by": "user",
-    #                     "extra_metadata": {},
-    #                     "ui_attributes": {
-    #                         "position": {"x": 100, "y": 100},
-    #                     },
-    #                 }
-    #             ],
-    #             "edges": [{"extra_metadata": {}, "ui_attributes": {}}],
-    #         }
-    #     },
-    # }
+
+@bp.route("/<whiteboard_id:str>/insights", methods=["POST"])
+async def get_related_insights_handler(request, whiteboard_id):
+    chat_history = await get_chat_history(whiteboard_id)
+
+    chat_history_text = "\n".join(
+        [f"{msg['sender']}: {msg['content']}" for msg in chat_history]
+    )
+
+    related_insights = get_related_insights(chat_history_text)
+
+    return response.json({"related_insights": related_insights})
+
+
+@bp.route("/<whiteboard_id:str>/answer", methods=["POST"])
+async def answer_question_handler(request, whiteboard_id):
+    chat_history = await get_chat_history(whiteboard_id)
+
+    answer = get_answer(chat_history)
+
+    return response.json({"answer": answer})
