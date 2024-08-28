@@ -39,7 +39,7 @@ class ChatGPTAgent:
 
     def chat(self, messages: List[Dict]):
         messages = [
-            Message(content=msg["content"], sender=Sender.HUMAN) for msg in messages
+            Message(content=msg["content"], sender=msg["sender"]) for msg in messages
         ]
         reply = self.invoke(messages)
         return reply.content
@@ -102,11 +102,58 @@ Output Format (JSON):
     )
 
     chatgpt_agent = ChatGPTAgent()
-    questions_text = chatgpt_agent.chat([{"role": "user", "content": prompt}])
+    questions_text = chatgpt_agent.chat([{"sender": "user", "content": prompt}])
     questions_text = questions_text.replace("```json\n", "").replace("```", "")
     questions = json.loads(questions_text)
 
     return questions
+
+
+def get_related_insights(
+    chat_history_text: str, target_language: str = None
+) -> List[Dict]:
+    # if target_language is None:
+    #     target_language = "chat history main language"
+
+    target_language = "chat history main language"
+    prompt = """Based on the provided chat history, generate several insights that reflect different perspectives and directions. The insights should be thought-provoking and aim to inspire the user's thinking. Please output the insights in a JSON format, where each insight is a separate item in the list. The response should only include the JSON output, and the language of the questions should be specified.
+
+Chat History:
+{0}
+
+Language: {1}
+""".format(
+        chat_history_text, target_language
+    )
+
+    prompt = (
+        prompt
+        + """
+Output Format (JSON):
+[
+"insight1",
+"insight2",
+"insight3"
+]
+
+"""
+    )
+
+    chatgpt_agent = ChatGPTAgent()
+    answers_text = chatgpt_agent.chat([{"sender": "user", "content": prompt}])
+    answers_text = answers_text.replace("```json\n", "").replace("```", "")
+    answers = json.loads(answers_text)
+
+    return answers
+
+
+def get_answer(chat_history: List[Dict], target_language: str = None) -> str:
+    if target_language is None:
+        target_language = "chat history main language"
+
+    chatgpt_agent = ChatGPTAgent()
+    answer = chatgpt_agent.chat(chat_history)
+    return answer
 
 
 if __name__ == "__main__":
@@ -114,5 +161,24 @@ if __name__ == "__main__":
 bot: 你想去哪里？
 user: 云南"""
     target_language = None
+    result = get_related_insights(chat_history_text, target_language)
+    print(result)
+    assert result != ""
+
+    chat_history_text = """user: 我想要去旅游
+bot: 你想去哪里？
+user: 云南"""
+    target_language = None
     result = get_related_questions(chat_history_text, target_language)
+    print(result)
+    assert result != ""
+
+    chat_history = [
+        {"content": "我想要去旅游", "sender": "user", "timestamp": "2022-01-01"},
+        {"content": "你想去哪里？", "sender": "bot", "timestamp": "2022-01-01"},
+        {"content": "云南", "sender": "user", "timestamp": "2022-01-01"},
+    ]
+    target_language = None
+    result = get_answer(chat_history, target_language)
+    print(result)
     assert result != ""
