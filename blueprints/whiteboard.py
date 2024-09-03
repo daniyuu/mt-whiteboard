@@ -142,13 +142,35 @@ async def get_chat_history(whiteboard_id: str):
 
     chat_history = []
     for node in nodes:
-        chat_history.append(
-            {
-                "content": node["content"],
-                "sender": node["created_by"],
-                "timestamp": node["updated_at"],
-            }
-        )
+        if node["type"] != "text":
+            content = node["content"]
+            if isinstance(content, dict):
+                question = content.get("question")
+                if question:
+                    chat_history.append(
+                        {
+                            "content": question,
+                            "sender": "bot",
+                            "timestamp": node["updated_at"],
+                        }
+                    )
+                answer = content.get("answer")
+                if answer:
+                    chat_history.append(
+                        {
+                            "content": answer,
+                            "sender": "user",
+                            "timestamp": node["updated_at"],
+                        }
+                    )
+            else:
+                chat_history.append(
+                    {
+                        "content": node["content"],
+                        "sender": node["created_by"],
+                        "timestamp": node["updated_at"],
+                    }
+                )
 
     return chat_history
 
