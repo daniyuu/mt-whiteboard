@@ -70,7 +70,7 @@ def get_related_questions(
     if target_language is None:
         target_language = "chat history main language"
 
-    prompt = """Based on the provided chat history, generate a list of the most relevant questions to gather necessary information from the user. The questions should be formatted as a JSON object suitable for front-end rendering, and the language of the questions should be specified. Only output the JSON object with the questions.
+    prompt = """Based on the provided chat history, generate a list of the most relevant questions to gather necessary information from the user, don't ask repeat questions. The questions should be formatted as a JSON object suitable for front-end rendering, and the language of the questions should be specified. Only output the JSON object with the questions.
 
 Chat History:
 {0}
