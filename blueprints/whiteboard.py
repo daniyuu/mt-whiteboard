@@ -54,8 +54,8 @@ async def create_whiteboard_handler(request):
         session.add(whiteboard)
 
     # create a file to store whiteboard data
-    async with aiofiles.open(f"whiteboard_data/{wid}.json", "w") as f:
-        await f.write(json.dumps({}))
+    async with aiofiles.open(f"whiteboard_data/{wid}.json", "w", encoding="utf-8") as f:
+        await f.write(json.dumps({}, indent=4, ensure_ascii=False))
 
     return response.json({"id": whiteboard.id})
 
@@ -77,8 +77,10 @@ async def update_whiteboard_handler(request, whiteboard_id):
 
     data = request.json.get("data")
     if data is not None:
-        async with aiofiles.open(f"whiteboard_data/{whiteboard_id}.json", "w") as f:
-            await f.write(json.dumps(data, indent=4))
+        async with aiofiles.open(
+            f"whiteboard_data/{whiteboard_id}.json", "w", encoding="utf-8"
+        ) as f:
+            await f.write(json.dumps(data, indent=4, ensure_ascii=False))
 
         async with request.ctx.session.begin():
             whiteboard = await request.ctx.session.get(Whiteboard, whiteboard_id)
@@ -113,7 +115,9 @@ async def get_whiteboard_handler(request, whiteboard_id):
             return response.json({"error": "Whiteboard not found"}, status=404)
 
         whiteboard_dict = whiteboard.to_dict()
-        async with aiofiles.open(f"whiteboard_data/{whiteboard_id}.json", "r") as f:
+        async with aiofiles.open(
+            f"whiteboard_data/{whiteboard_id}.json", "r", encoding="utf-8"
+        ) as f:
             data = await f.read()
             whiteboard_dict["data"] = json.loads(data)
 
@@ -134,7 +138,9 @@ async def get_all_whiteboards_handler(request):
 
 
 async def get_chat_history(whiteboard_id: str):
-    async with aiofiles.open(f"whiteboard_data/{whiteboard_id}.json", "r") as f:
+    async with aiofiles.open(
+        f"whiteboard_data/{whiteboard_id}.json", "r", encoding="utf-8"
+    ) as f:
         data = await f.read()
 
     data = json.loads(data)
@@ -142,7 +148,7 @@ async def get_chat_history(whiteboard_id: str):
 
     chat_history = []
     for node in nodes:
-        if node["type"] != "text":
+        if node["type"] == "text":
             content = node["content"]
             if isinstance(content, dict):
                 question = content.get("question")
