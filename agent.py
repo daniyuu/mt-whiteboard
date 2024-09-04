@@ -138,12 +138,20 @@ Output Format (JSON):
     return answers
 
 
-def get_answer(chat_history: List[Dict], target_language: str = None) -> str:
-    if target_language is None:
-        target_language = "chat history main language"
+def get_answer(chat_history_text: str) -> str:
+    prompt = """Based on the provided chat history, infer the user's intent and purpose behind the conversation. Determine the most likely desired output or result that the user is seeking, such as a travel plan for travel-related discussions or an analysis report for product analysis conversations. Use the inferred intent to produce the specific high-quality output that best meets the user's needs and goals. The language of the output should match the language of the chat history. The response should directly address the inferred user intent with a complete and relevant output.
+
+Chat History:
+{history}
+
+Output:
+[Insert the inferred output here based on the user's intent]
+""".format(
+        history=chat_history_text
+    )
 
     chatgpt_agent = ChatGPTAgent()
-    answer = chatgpt_agent.chat(chat_history)
+    answer = chatgpt_agent.chat([{"sender": "user", "content": prompt}])
     return answer
 
 
@@ -151,13 +159,8 @@ async def try_related_insights():
     from data_helper import WhiteboardData
 
     whiteboard_id = WhiteboardData("aeSo4yq9ERU9pKGdX3cGEb")
-    chat_history = await whiteboard_id.load_as_chat_history()
+    chat_history_text = await whiteboard_id.load_as_chat_history_text()
 
-    chat_history_text = "\n".join(
-        [f"{msg['sender']}: {msg['content']}" for msg in chat_history]
-    )
-
-    # target_language = "chinese"
     result = get_related_insights(chat_history_text)
     print(result)
 
@@ -166,13 +169,19 @@ async def try_related_questions():
     from data_helper import WhiteboardData
 
     whiteboard_id = WhiteboardData("aeSo4yq9ERU9pKGdX3cGEb")
-    chat_history = await whiteboard_id.load_as_chat_history()
-
-    chat_history_text = "\n".join(
-        [f"{msg['sender']}: {msg['content']}" for msg in chat_history]
-    )
+    chat_history_text = await whiteboard_id.load_as_chat_history_text()
 
     result = get_related_questions(chat_history_text)
+    print(result)
+
+
+async def try_get_answer():
+    from data_helper import WhiteboardData
+
+    whiteboard_id = WhiteboardData("aeSo4yq9ERU9pKGdX3cGEb")
+    chat_history_text = await whiteboard_id.load_as_chat_history_text()
+
+    result = get_answer(chat_history_text)
     print(result)
 
 
@@ -239,5 +248,5 @@ if __name__ == "__main__":
     # run async test_related_insights
 
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(try_related_questions())
+    loop.run_until_complete(try_get_answer())
     loop.close()
