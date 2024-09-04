@@ -77,8 +77,8 @@ Chat History:
     )
 
     prompt = (
-        prompt
-        + """
+            prompt
+            + """
 Output Format (JSON):
 [
     {
@@ -116,8 +116,8 @@ Chat History:
     )
 
     prompt = (
-        prompt
-        + """
+            prompt
+            + """
 Output Format (JSON):
 [
 "insight1",
@@ -153,6 +153,28 @@ Output:
     chatgpt_agent = ChatGPTAgent()
     answer = chatgpt_agent.chat([{"sender": "user", "content": prompt}])
     return answer
+
+
+async def get_answer_steaming(chat_history_text: str, response) -> str:
+    prompt = """Based on the provided chat history, infer the user's intent and purpose behind the conversation. Determine the most likely desired output or result that the user is seeking, such as a travel plan for travel-related discussions or an analysis report for product analysis conversations. Use the inferred intent to produce the specific high-quality output that best meets the user's needs and goals. The language of the output should match the language of the chat history. The response should directly address the inferred user intent with a complete and relevant output.
+
+Chat History:
+{history}
+
+Output:
+[Insert the inferred output here based on the user's intent]
+""".format(
+        history=chat_history_text
+    )
+
+    chatgpt_agent = ChatGPTAgent()
+
+    async for chunk in chatgpt_agent.chat_streaming(
+            [{"sender": "user", "content": prompt}]
+    ):
+        await response.send(chunk)
+
+    await response.eof()
 
 
 async def try_related_insights():
