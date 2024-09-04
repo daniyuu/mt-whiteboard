@@ -5,7 +5,12 @@ from sanic.log import logger
 from shortuuid import uuid
 from sqlalchemy.future import select
 
-from agent import get_related_questions, get_related_insights, get_answer
+from agent import (
+    get_related_questions,
+    get_related_insights,
+    get_answer,
+    get_answer_steaming,
+)
 from data_helper import WhiteboardData
 from models import Whiteboard
 
@@ -158,3 +163,13 @@ async def answer_question_handler(request, whiteboard_id):
     answer = get_answer(chat_history_text)
 
     return response.json({"answer": answer})
+
+
+@bp.route("/<whiteboard_id:str>/answer_streaming", methods=["POST"])
+async def answer_question_streaming_handler(request, whiteboard_id):
+    whiteboard_data = WhiteboardData(whiteboard_id)
+    chat_history_text = await whiteboard_data.load_as_chat_history_text()
+
+    response = await request.respond(content_type="application/json")
+
+    await get_answer_steaming(chat_history_text, response)
