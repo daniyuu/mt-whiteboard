@@ -1,8 +1,10 @@
 import asyncio
 import json
 import os
+from pprint import pprint
 from typing import List, Dict
 
+import aiohttp
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -64,6 +66,39 @@ class ChatGPTAgent:
         ]
         async for chunk in self.model.astream(_messages):
             yield chunk.content
+
+
+class SearchAgent:
+    def __init__(self):
+        # DOC: https://www.microsoft.com/en-us/bing/apis/bing-web-search-api
+        self.subscription_key = os.environ["BING_SEARCH_V7_SUBSCRIPTION_KEY"]
+        self.endpoint = os.environ["BING_SEARCH_V7_ENDPOINT"] + "v7.0/search"
+
+    async def search(self, query: str):
+        # Construct a request
+        mkt = "en-US"
+        params = {"q": query, "mkt": mkt}
+        headers = {"Ocp-Apim-Subscription-Key": self.subscription_key}
+
+        # Call the API
+        async with aiohttp.ClientSession() as session:
+            try:
+                async with session.get(
+                    self.endpoint, headers=headers, params=params
+                ) as response:
+                    response.raise_for_status()
+
+                    print("Headers:")
+                    print(response.headers)
+
+                    print("JSON Response:")
+
+                    result = await response.json()
+                    pprint(result)
+            except Exception as ex:
+                raise ex
+
+        return result
 
 
 def get_related_questions(chat_history_text: str) -> List[Dict]:
@@ -177,6 +212,43 @@ Output:
     await response.eof()
 
 
+def get_search_keywords(chat_history_text: str) -> str:
+    prompt = """Based on the provided chat history, infer the user's intent and purpose behind the conversation. While you are unable to access real-time or specific internet information directly, you can assist the user by generating relevant search keywords that can be used to find the necessary information via a search engine. Please output the queies in a JSON format, where each item is a separate entry in the list. The response should only include the JSON output, and the language of the queries should be the same as the chat history
+
+Chat History:
+{history}
+
+Output Format (JSON):
+[
+"query1",
+"query2",
+"query3"
+]
+
+""".format(
+        history=chat_history_text
+    )
+
+    chatgpt_agent = ChatGPTAgent()
+    answers_text = chatgpt_agent.chat([{"sender": "user", "content": prompt}])
+    answers_text = answers_text.replace("```json\n", "").replace("```", "")
+    answers = json.loads(answers_text)
+
+    return answers
+
+
+async def get_search_results(chat_history_text: str, limit: int = 3) -> List[Dict]:
+    queries = get_search_keywords(chat_history_text)
+    search_agent = SearchAgent()
+    results = []
+    for query in queries:
+        result = await search_agent.search(query)
+        results.append(result)
+        if len(results) >= limit:
+            break
+    return results
+
+
 async def try_related_insights():
     from data_helper import WhiteboardData
 
@@ -207,36 +279,30 @@ async def try_get_answer():
     print(result)
 
 
-def try_search():
-    # DOC: https://www.microsoft.com/en-us/bing/apis/bing-web-search-api
-    import os
-    from pprint import pprint
-    import requests
+async def try_get_search_keywords():
+    from data_helper import WhiteboardData
 
-    # Add your Bing Search V7 subscription key and endpoint to your environment variables.
-    subscription_key = os.environ["BING_SEARCH_V7_SUBSCRIPTION_KEY"]
-    endpoint = os.environ["BING_SEARCH_V7_ENDPOINT"] + "v7.0/search"
+    whiteboard_id = WhiteboardData("aeSo4yq9ERU9pKGdX3cGEb")
+    chat_history_text = await whiteboard_id.load_as_chat_history_text()
 
-    # Query term(s) to search for.
-    query = "最近十天的天气"
+    result = get_search_keywords(chat_history_text)
+    print(result)
 
-    # Construct a request
-    mkt = "en-US"
-    params = {"q": query, "mkt": mkt}
-    headers = {"Ocp-Apim-Subscription-Key": subscription_key}
 
-    # Call the API
-    try:
-        response = requests.get(endpoint, headers=headers, params=params)
-        response.raise_for_status()
+async def try_search_engine():
+    search_agent = SearchAgent()
+    result = await search_agent.search("苏州未来十天的天气")
+    return result
 
-        print("Headers:")
-        print(response.headers)
 
-        print("JSON Response:")
-        pprint(response.json())
-    except Exception as ex:
-        raise ex
+async def try_get_search_results():
+    from data_helper import WhiteboardData
+
+    whiteboard_id = WhiteboardData("aeSo4yq9ERU9pKGdX3cGEb")
+    chat_history_text = await whiteboard_id.load_as_chat_history_text()
+
+    result = await get_search_results(chat_history_text)
+    print(result)
 
 
 if __name__ == "__main__":
@@ -270,5 +336,5 @@ if __name__ == "__main__":
     # run async test_related_insights
 
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(try_get_answer())
+    loop.run_until_complete(try_get_search_results())
     loop.close()
