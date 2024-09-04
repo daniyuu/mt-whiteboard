@@ -10,6 +10,7 @@ from agent import (
     get_related_insights,
     get_answer,
     get_answer_steaming,
+    get_search_results,
 )
 from data_helper import WhiteboardData
 from models import Whiteboard
@@ -173,3 +174,17 @@ async def answer_question_streaming_handler(request, whiteboard_id):
     response = await request.respond(content_type="application/json")
 
     await get_answer_steaming(chat_history_text, response)
+
+
+@bp.route("/<whiteboard_id:str>/search", methods=["POST"])
+async def search_handler(request, whiteboard_id):
+    whiteboard_data = WhiteboardData(whiteboard_id)
+    chat_history_text = await whiteboard_data.load_as_chat_history_text()
+
+    query = request.json.get("query")
+    if not query:
+        return response.json({"error": "Query is required"}, status=400)
+
+    search_results = get_search_results(chat_history_text, query)
+
+    return response.json({"search_results": search_results})
