@@ -1,13 +1,12 @@
-import json
 from datetime import datetime
 
-import aiofiles
 from sanic import Blueprint, response
 from sanic.log import logger
 from shortuuid import uuid
 from sqlalchemy.future import select
 
 from agent import get_related_questions, get_related_insights, get_answer
+from data_helper import WhiteboardData
 from models import Whiteboard
 
 bp = Blueprint("whiteboard", url_prefix="/whiteboard")
@@ -53,9 +52,7 @@ async def create_whiteboard_handler(request):
         whiteboard = Whiteboard(id=wid, name=name, ui_attributes=ui_attributes)
         session.add(whiteboard)
 
-    # create a file to store whiteboard data
-    async with aiofiles.open(f"whiteboard_data/{wid}.json", "w", encoding="utf-8") as f:
-        await f.write(json.dumps({}, indent=4, ensure_ascii=False))
+    await WhiteboardData.create(wid)
 
     return response.json({"id": whiteboard.id})
 
@@ -77,10 +74,8 @@ async def update_whiteboard_handler(request, whiteboard_id):
 
     data = request.json.get("data")
     if data is not None:
-        async with aiofiles.open(
-            f"whiteboard_data/{whiteboard_id}.json", "w", encoding="utf-8"
-        ) as f:
-            await f.write(json.dumps(data, indent=4, ensure_ascii=False))
+        whiteboard_data = WhiteboardData(whiteboard_id)
+        await whiteboard_data.update(data)
 
         async with request.ctx.session.begin():
             whiteboard = await request.ctx.session.get(Whiteboard, whiteboard_id)
@@ -115,11 +110,8 @@ async def get_whiteboard_handler(request, whiteboard_id):
             return response.json({"error": "Whiteboard not found"}, status=404)
 
         whiteboard_dict = whiteboard.to_dict()
-        async with aiofiles.open(
-            f"whiteboard_data/{whiteboard_id}.json", "r", encoding="utf-8"
-        ) as f:
-            data = await f.read()
-            whiteboard_dict["data"] = json.loads(data)
+        whiteboard_data = WhiteboardData(whiteboard_id)
+        whiteboard_dict["data"] = await whiteboard_data.load()
 
     return response.json(whiteboard_dict)
 
@@ -137,55 +129,11 @@ async def get_all_whiteboards_handler(request):
     )
 
 
-async def get_chat_history(whiteboard_id: str):
-    async with aiofiles.open(
-        f"whiteboard_data/{whiteboard_id}.json", "r", encoding="utf-8"
-    ) as f:
-        data = await f.read()
-
-    data = json.loads(data)
-    nodes = data["graph"]["nodes"]
-
-    chat_history = []
-    for node in nodes:
-        if node["type"] == "text":
-            content = node["content"]
-            if isinstance(content, dict):
-                question = content.get("question")
-                if question:
-                    chat_history.append(
-                        {
-                            "content": question,
-                            "sender": "bot",
-                            "timestamp": node["updated_at"],
-                        }
-                    )
-                answer = content.get("answer")
-                if answer:
-                    chat_history.append(
-                        {
-                            "content": answer,
-                            "sender": "user",
-                            "timestamp": node["updated_at"],
-                        }
-                    )
-            else:
-                chat_history.append(
-                    {
-                        "content": node["content"],
-                        "sender": node["created_by"],
-                        "timestamp": node["updated_at"],
-                    }
-                )
-
-    return chat_history
-
-
 # Get related questions about current whiteboard
 @bp.route("/<whiteboard_id:str>/questions", methods=["POST"])
 async def get_related_questions_handler(request, whiteboard_id):
-
-    chat_history = await get_chat_history(whiteboard_id)
+    whiteboard_data = WhiteboardData(whiteboard_id)
+    chat_history = await whiteboard_data.load_as_chat_history()
 
     chat_history_text = "\n".join(
         [f"{msg['sender']}: {msg['content']}" for msg in chat_history]
@@ -198,7 +146,8 @@ async def get_related_questions_handler(request, whiteboard_id):
 
 @bp.route("/<whiteboard_id:str>/insights", methods=["POST"])
 async def get_related_insights_handler(request, whiteboard_id):
-    chat_history = await get_chat_history(whiteboard_id)
+    whiteboard_data = WhiteboardData(whiteboard_id)
+    chat_history = await whiteboard_data.load_as_chat_history()
 
     chat_history_text = "\n".join(
         [f"{msg['sender']}: {msg['content']}" for msg in chat_history]
@@ -211,7 +160,8 @@ async def get_related_insights_handler(request, whiteboard_id):
 
 @bp.route("/<whiteboard_id:str>/answer", methods=["POST"])
 async def answer_question_handler(request, whiteboard_id):
-    chat_history = await get_chat_history(whiteboard_id)
+    whiteboard_data = WhiteboardData(whiteboard_id)
+    chat_history = await whiteboard_data.load_as_chat_history()
 
     answer = get_answer(chat_history)
 
