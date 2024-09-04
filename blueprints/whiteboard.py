@@ -133,11 +133,7 @@ async def get_all_whiteboards_handler(request):
 @bp.route("/<whiteboard_id:str>/questions", methods=["POST"])
 async def get_related_questions_handler(request, whiteboard_id):
     whiteboard_data = WhiteboardData(whiteboard_id)
-    chat_history = await whiteboard_data.load_as_chat_history()
-
-    chat_history_text = "\n".join(
-        [f"{msg['sender']}: {msg['content']}" for msg in chat_history]
-    )
+    chat_history_text = await whiteboard_data.load_as_chat_history_text()
 
     related_questions = get_related_questions(chat_history_text)
 
@@ -147,11 +143,7 @@ async def get_related_questions_handler(request, whiteboard_id):
 @bp.route("/<whiteboard_id:str>/insights", methods=["POST"])
 async def get_related_insights_handler(request, whiteboard_id):
     whiteboard_data = WhiteboardData(whiteboard_id)
-    chat_history = await whiteboard_data.load_as_chat_history()
-
-    chat_history_text = "\n".join(
-        [f"{msg['sender']}: {msg['content']}" for msg in chat_history]
-    )
+    chat_history_text = await whiteboard_data.load_as_chat_history_text()
 
     related_insights = get_related_insights(chat_history_text)
 
@@ -161,8 +153,8 @@ async def get_related_insights_handler(request, whiteboard_id):
 @bp.route("/<whiteboard_id:str>/answer", methods=["POST"])
 async def answer_question_handler(request, whiteboard_id):
     whiteboard_data = WhiteboardData(whiteboard_id)
-    chat_history = await whiteboard_data.load_as_chat_history()
+    chat_history_text = await whiteboard_data.load_as_chat_history_text()
 
-    answer = get_answer(chat_history)
+    answer = get_answer(chat_history_text)
 
     return response.json({"answer": answer})
