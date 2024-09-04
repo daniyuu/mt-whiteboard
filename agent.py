@@ -66,7 +66,7 @@ class ChatGPTAgent:
 
 
 def get_related_questions(
-        chat_history_text: str, target_language: str = None
+    chat_history_text: str, target_language: str = None
 ) -> List[Dict]:
     if target_language is None:
         target_language = "chat history main language"
@@ -82,8 +82,8 @@ Language: {1}
     )
 
     prompt = (
-            prompt
-            + """
+        prompt
+        + """
 Output Format (JSON):
 [
     {
@@ -111,7 +111,7 @@ Output Format (JSON):
 
 
 def get_related_insights(
-        chat_history_text: str, target_language: str = None
+    chat_history_text: str, target_language: str = None
 ) -> List[Dict]:
     # if target_language is None:
     #     target_language = "chat history main language"
@@ -128,8 +128,8 @@ Language: {1}
     )
 
     prompt = (
-            prompt
-            + """
+        prompt
+        + """
 Output Format (JSON):
 [
 "insight1",
