@@ -66,9 +66,7 @@ class ChatGPTAgent:
             yield chunk.content
 
 
-def get_related_questions(
-        chat_history_text: str
-) -> List[Dict]:
+def get_related_questions(chat_history_text: str) -> List[Dict]:
     prompt = """Based on the provided chat history, generate a list of the most relevant questions to gather necessary information from the user that will directly enhance the quality of the agent’s future responses and services, avoiding questions that repeat information already known from the chat history. Focus on identifying gaps in understanding, clarifying user preferences, or obtaining specific details that will enable the agent to provide more personalized and effective assistance. The questions should be formatted as a JSON object suitable for front-end rendering, and the language of the questions should match the main language used in the chat history. Only output the JSON object with the questions.
         
 Chat History:
@@ -79,8 +77,8 @@ Chat History:
     )
 
     prompt = (
-            prompt
-            + """
+        prompt
+        + """
 Output Format (JSON):
 [
     {
@@ -118,8 +116,8 @@ Chat History:
     )
 
     prompt = (
-            prompt
-            + """
+        prompt
+        + """
 Output Format (JSON):
 [
 "insight1",
