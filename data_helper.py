@@ -65,3 +65,7 @@ class WhiteboardData:
                     )
 
         return chat_history
+
+    async def load_as_chat_history_text(self):
+        chat_history = await self.load_as_chat_history()
+        return "\n".join([f"{msg['sender']}: {msg['content']}" for msg in chat_history])

@@ -28,6 +28,5 @@ async def test_get_related_questions():
     chat_history_text = """user: 我想要去旅游
 bot: 你想去哪里？
 user: 云南"""
-    target_language = None
-    result = get_related_questions(chat_history_text, target_language)
+    result = get_related_questions(chat_history_text)
     assert result != ""
