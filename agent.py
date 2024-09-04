@@ -1,3 +1,4 @@
+import asyncio
 import json
 import os
 from typing import List, Dict
@@ -66,7 +67,7 @@ class ChatGPTAgent:
 
 
 def get_related_questions(
-    chat_history_text: str, target_language: str = None
+        chat_history_text: str, target_language: str = None
 ) -> List[Dict]:
     if target_language is None:
         target_language = "chat history main language"
@@ -82,8 +83,8 @@ Language: {1}
     )
 
     prompt = (
-        prompt
-        + """
+            prompt
+            + """
 Output Format (JSON):
 [
     {
@@ -110,31 +111,27 @@ Output Format (JSON):
     return questions
 
 
-def get_related_insights(
-    chat_history_text: str, target_language: str = None
-) -> List[Dict]:
-    # if target_language is None:
-    #     target_language = "chat history main language"
-
-    target_language = "chat history main language"
-    prompt = """Based on the provided chat history, generate several insights that reflect different perspectives and directions. The insights should be thought-provoking and aim to inspire the user's thinking. Please output the insights in a JSON format, where each insight is a separate item in the list. The response should only include the JSON output, and the language of the questions should be specified.
+def get_related_insights(chat_history_text: str) -> List[Dict]:
+    prompt = """Based on the provided chat history, generate high-quality suggestions or insights that reflect different perspectives and directions. The insights should be concise, unique, and thought-provoking, avoiding redundancy and irrelevant information. Aim for depth and specificity in each insight to inspire the user's thinking.. The language of the insights should match the language of the chat history. Please output the insights in a JSON format, where each insight is a separate item in the list. The response should only include the JSON output, and the language of the insights should be the same as the chat history.
 
 Chat History:
 {0}
 
-Language: {1}
 """.format(
-        chat_history_text, target_language
+        chat_history_text
     )
 
     prompt = (
-        prompt
-        + """
+            prompt
+            + """
 Output Format (JSON):
 [
+"suggestion1",
+"suggestion2",
+"suggestion3",
 "insight1",
 "insight2",
-"insight3"
+"insight3",
 ]
 
 """
@@ -157,7 +154,22 @@ def get_answer(chat_history: List[Dict], target_language: str = None) -> str:
     return answer
 
 
-def test_search():
+async def try_related_insights():
+    from data_helper import WhiteboardData
+
+    whiteboard_id = WhiteboardData("aeSo4yq9ERU9pKGdX3cGEb")
+    chat_history = await whiteboard_id.load_as_chat_history()
+
+    chat_history_text = "\n".join(
+        [f"{msg['sender']}: {msg['content']}" for msg in chat_history]
+    )
+
+    # target_language = "chinese"
+    result = get_related_insights(chat_history_text)
+    print(result)
+
+
+def try_search():
     # DOC: https://www.microsoft.com/en-us/bing/apis/bing-web-search-api
     import os
     from pprint import pprint
@@ -216,4 +228,9 @@ if __name__ == "__main__":
     #     print(result)
     #     assert result != ""
 
-    search()
+    # try_search()
+    # run async test_related_insights
+
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(try_related_insights())
+    loop.close()
