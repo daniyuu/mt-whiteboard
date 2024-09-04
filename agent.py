@@ -77,8 +77,8 @@ Chat History:
     )
 
     prompt = (
-            prompt
-            + """
+        prompt
+        + """
 Output Format (JSON):
 [
     {
@@ -116,8 +116,8 @@ Chat History:
     )
 
     prompt = (
-            prompt
-            + """
+        prompt
+        + """
 Output Format (JSON):
 [
 "insight1",
@@ -170,7 +170,7 @@ Output:
     chatgpt_agent = ChatGPTAgent()
 
     async for chunk in chatgpt_agent.chat_streaming(
-            [{"sender": "user", "content": prompt}]
+        [{"sender": "user", "content": prompt}]
     ):
         await response.send(chunk)
 
