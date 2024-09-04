@@ -1,7 +1,10 @@
+import asyncio
 import json
 import os
+from pprint import pprint
 from typing import List, Dict
 
+import aiohttp
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -65,20 +68,47 @@ class ChatGPTAgent:
             yield chunk.content
 
 
-def get_related_questions(
-    chat_history_text: str, target_language: str = None
-) -> List[Dict]:
-    if target_language is None:
-        target_language = "chat history main language"
+class SearchAgent:
+    def __init__(self):
+        # DOC: https://www.microsoft.com/en-us/bing/apis/bing-web-search-api
+        self.subscription_key = os.environ["BING_SEARCH_V7_SUBSCRIPTION_KEY"]
+        self.endpoint = os.environ["BING_SEARCH_V7_ENDPOINT"] + "v7.0/search"
 
-    prompt = """Based on the provided chat history, generate a list of the most relevant questions to gather necessary information from the user, don't ask repeat questions. The questions should be formatted as a JSON object suitable for front-end rendering, and the language of the questions should be specified. Only output the JSON object with the questions.
+    async def search(self, query: str):
+        # Construct a request
+        mkt = "en-US"
+        params = {"q": query, "mkt": mkt}
+        headers = {"Ocp-Apim-Subscription-Key": self.subscription_key}
 
+        # Call the API
+        async with aiohttp.ClientSession() as session:
+            try:
+                async with session.get(
+                    self.endpoint, headers=headers, params=params
+                ) as response:
+                    response.raise_for_status()
+
+                    print("Headers:")
+                    print(response.headers)
+
+                    print("JSON Response:")
+
+                    result = await response.json()
+                    pprint(result)
+            except Exception as ex:
+                raise ex
+
+        return result
+
+
+def get_related_questions(chat_history_text: str) -> List[Dict]:
+    prompt = """Based on the provided chat history, generate a list of the most relevant questions to gather necessary information from the user that will directly enhance the quality of the agent’s future responses and services, avoiding questions that repeat information already known from the chat history. Focus on identifying gaps in understanding, clarifying user preferences, or obtaining specific details that will enable the agent to provide more personalized and effective assistance. The questions should be formatted as a JSON object suitable for front-end rendering, and the language of the questions should match the main language used in the chat history. Only output the JSON object with the questions.
+        
 Chat History:
 {0}
 
-Language: {1}
 """.format(
-        chat_history_text, target_language
+        chat_history_text
     )
 
     prompt = (
@@ -110,21 +140,14 @@ Output Format (JSON):
     return questions
 
 
-def get_related_insights(
-    chat_history_text: str, target_language: str = None
-) -> List[Dict]:
-    # if target_language is None:
-    #     target_language = "chat history main language"
-
-    target_language = "chat history main language"
-    prompt = """Based on the provided chat history, generate several insights that reflect different perspectives and directions. The insights should be thought-provoking and aim to inspire the user's thinking. Please output the insights in a JSON format, where each insight is a separate item in the list. The response should only include the JSON output, and the language of the questions should be specified.
-
+def get_related_insights(chat_history_text: str) -> List[Dict]:
+    prompt = """Based on the provided chat history, generate a mix of high-quality insights and actionable suggestions that reflect different perspectives and directions. The insights should be thought-provoking, concise, and unique, while the suggestions should be practical, specific, and directly applicable. Avoid redundancy, irrelevant information, and focus on providing value. The language of the insights and suggestions should match the language of the chat history. Please output the insights and suggestions in a JSON format, where each item is a separate entry in the list. The response should only include the JSON output, and the language of the insights and suggestions should be the same as the chat history.
+    
 Chat History:
 {0}
 
-Language: {1}
 """.format(
-        chat_history_text, target_language
+        chat_history_text
     )
 
     prompt = (
@@ -133,8 +156,10 @@ Language: {1}
 Output Format (JSON):
 [
 "insight1",
+"suggestion1",
 "insight2",
-"insight3"
+"suggestion2",
+...
 ]
 
 """
@@ -148,45 +173,136 @@ Output Format (JSON):
     return answers
 
 
-def get_answer(chat_history: List[Dict], target_language: str = None) -> str:
-    if target_language is None:
-        target_language = "chat history main language"
+def get_answer(chat_history_text: str) -> str:
+    prompt = """Based on the provided chat history, infer the user's intent and purpose behind the conversation. Determine the most likely desired output or result that the user is seeking, such as a travel plan for travel-related discussions or an analysis report for product analysis conversations. Use the inferred intent to produce the specific high-quality output that best meets the user's needs and goals. The language of the output should match the language of the chat history. The response should directly address the inferred user intent with a complete and relevant output.
+
+Chat History:
+{history}
+
+Output:
+[Insert the inferred output here based on the user's intent]
+""".format(
+        history=chat_history_text
+    )
 
     chatgpt_agent = ChatGPTAgent()
-    answer = chatgpt_agent.chat(chat_history)
+    answer = chatgpt_agent.chat([{"sender": "user", "content": prompt}])
     return answer
 
 
-def test_search():
-    # DOC: https://www.microsoft.com/en-us/bing/apis/bing-web-search-api
-    import os
-    from pprint import pprint
-    import requests
+async def get_answer_steaming(chat_history_text: str, response) -> str:
+    prompt = """Based on the provided chat history, infer the user's intent and purpose behind the conversation. Determine the most likely desired output or result that the user is seeking, such as a travel plan for travel-related discussions or an analysis report for product analysis conversations. Use the inferred intent to produce the specific high-quality output that best meets the user's needs and goals. The language of the output should match the language of the chat history. The response should directly address the inferred user intent with a complete and relevant output.
 
-    # Add your Bing Search V7 subscription key and endpoint to your environment variables.
-    subscription_key = os.environ["BING_SEARCH_V7_SUBSCRIPTION_KEY"]
-    endpoint = os.environ["BING_SEARCH_V7_ENDPOINT"] + "v7.0/search"
+Chat History:
+{history}
 
-    # Query term(s) to search for.
-    query = "最近十天的天气"
+Output:
+[Insert the inferred output here based on the user's intent]
+""".format(
+        history=chat_history_text
+    )
 
-    # Construct a request
-    mkt = "en-US"
-    params = {"q": query, "mkt": mkt}
-    headers = {"Ocp-Apim-Subscription-Key": subscription_key}
+    chatgpt_agent = ChatGPTAgent()
 
-    # Call the API
-    try:
-        response = requests.get(endpoint, headers=headers, params=params)
-        response.raise_for_status()
+    async for chunk in chatgpt_agent.chat_streaming(
+        [{"sender": "user", "content": prompt}]
+    ):
+        await response.send(chunk)
 
-        print("Headers:")
-        print(response.headers)
+    await response.eof()
 
-        print("JSON Response:")
-        pprint(response.json())
-    except Exception as ex:
-        raise ex
+
+def get_search_keywords(chat_history_text: str) -> str:
+    prompt = """Based on the provided chat history, infer the user's intent and purpose behind the conversation. While you are unable to access real-time or specific internet information directly, you can assist the user by generating relevant search keywords that can be used to find the necessary information via a search engine. Please output the queies in a JSON format, where each item is a separate entry in the list. The response should only include the JSON output, and the language of the queries should be the same as the chat history
+
+Chat History:
+{history}
+
+Output Format (JSON):
+[
+"query1",
+"query2",
+"query3"
+]
+
+""".format(
+        history=chat_history_text
+    )
+
+    chatgpt_agent = ChatGPTAgent()
+    answers_text = chatgpt_agent.chat([{"sender": "user", "content": prompt}])
+    answers_text = answers_text.replace("```json\n", "").replace("```", "")
+    answers = json.loads(answers_text)
+
+    return answers
+
+
+async def get_search_results(chat_history_text: str, limit: int = 3) -> List[Dict]:
+    queries = get_search_keywords(chat_history_text)
+    search_agent = SearchAgent()
+    results = []
+    for query in queries:
+        result = await search_agent.search(query)
+        results.append(result)
+        if len(results) >= limit:
+            break
+    return results
+
+
+async def try_related_insights():
+    from data_helper import WhiteboardData
+
+    whiteboard_id = WhiteboardData("aeSo4yq9ERU9pKGdX3cGEb")
+    chat_history_text = await whiteboard_id.load_as_chat_history_text()
+
+    result = get_related_insights(chat_history_text)
+    print(result)
+
+
+async def try_related_questions():
+    from data_helper import WhiteboardData
+
+    whiteboard_id = WhiteboardData("aeSo4yq9ERU9pKGdX3cGEb")
+    chat_history_text = await whiteboard_id.load_as_chat_history_text()
+
+    result = get_related_questions(chat_history_text)
+    print(result)
+
+
+async def try_get_answer():
+    from data_helper import WhiteboardData
+
+    whiteboard_id = WhiteboardData("aeSo4yq9ERU9pKGdX3cGEb")
+    chat_history_text = await whiteboard_id.load_as_chat_history_text()
+
+    result = get_answer(chat_history_text)
+    print(result)
+
+
+async def try_get_search_keywords():
+    from data_helper import WhiteboardData
+
+    whiteboard_id = WhiteboardData("aeSo4yq9ERU9pKGdX3cGEb")
+    chat_history_text = await whiteboard_id.load_as_chat_history_text()
+
+    result = get_search_keywords(chat_history_text)
+    print(result)
+
+
+async def try_search_engine():
+    search_agent = SearchAgent()
+    result = await search_agent.search("苏州未来十天的天气")
+    return result
+
+
+async def try_get_search_results():
+    from data_helper import WhiteboardData
+
+    whiteboard_id = WhiteboardData("aeSo4yq9ERU9pKGdX3cGEb")
+    chat_history_text = await whiteboard_id.load_as_chat_history_text()
+
+    result = await get_search_results(chat_history_text)
+    print(result)
 
 
 if __name__ == "__main__":
@@ -216,4 +332,9 @@ if __name__ == "__main__":
     #     print(result)
     #     assert result != ""
 
-    search()
+    # try_search()
+    # run async test_related_insights
+
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(try_get_search_results())
+    loop.close()

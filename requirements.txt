@@ -11,3 +11,4 @@ pytest
 pytest-asyncio
 sqlalchemy[asyncio]
 aiofiles
+aiohttp
