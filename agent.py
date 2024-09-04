@@ -72,14 +72,13 @@ def get_related_questions(
     if target_language is None:
         target_language = "chat history main language"
 
-    prompt = """Based on the provided chat history, generate a list of the most relevant questions to gather necessary information from the user, don't ask repeat questions. The questions should be formatted as a JSON object suitable for front-end rendering, and the language of the questions should be specified. Only output the JSON object with the questions.
+    prompt = """Based on the provided chat history, generate a list of the most relevant questions to gather necessary information from the user, don't ask repeat questions. The questions should be formatted as a JSON object suitable for front-end rendering, and the language of the questions content should be the same as the chat history. Only output the JSON object with the questions.
 
 Chat History:
 {0}
 
-Language: {1}
 """.format(
-        chat_history_text, target_language
+        chat_history_text
     )
 
     prompt = (
@@ -168,6 +167,21 @@ async def try_related_insights():
     print(result)
 
 
+async def try_related_questions():
+    from data_helper import WhiteboardData
+
+    whiteboard_id = WhiteboardData("aeSo4yq9ERU9pKGdX3cGEb")
+    chat_history = await whiteboard_id.load_as_chat_history()
+
+    chat_history_text = "\n".join(
+        [f"{msg['sender']}: {msg['content']}" for msg in chat_history]
+    )
+
+    # target_language = "chinese"
+    result = get_related_questions(chat_history_text)
+    print(result)
+
+
 def try_search():
     # DOC: https://www.microsoft.com/en-us/bing/apis/bing-web-search-api
     import os
@@ -231,5 +245,5 @@ if __name__ == "__main__":
     # run async test_related_insights
 
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(try_related_insights())
+    loop.run_until_complete(try_related_questions())
     loop.close()
