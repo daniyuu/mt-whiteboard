@@ -1,6 +1,7 @@
+import json
 import os
 from typing import List, Dict
-import json
+
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -65,7 +66,7 @@ class ChatGPTAgent:
 
 
 def get_related_questions(
-    chat_history_text: str, target_language: str = None
+        chat_history_text: str, target_language: str = None
 ) -> List[Dict]:
     if target_language is None:
         target_language = "chat history main language"
@@ -81,8 +82,8 @@ Language: {1}
     )
 
     prompt = (
-        prompt
-        + """
+            prompt
+            + """
 Output Format (JSON):
 [
     {
@@ -110,7 +111,7 @@ Output Format (JSON):
 
 
 def get_related_insights(
-    chat_history_text: str, target_language: str = None
+        chat_history_text: str, target_language: str = None
 ) -> List[Dict]:
     # if target_language is None:
     #     target_language = "chat history main language"
@@ -127,8 +128,8 @@ Language: {1}
     )
 
     prompt = (
-        prompt
-        + """
+            prompt
+            + """
 Output Format (JSON):
 [
 "insight1",
@@ -156,29 +157,63 @@ def get_answer(chat_history: List[Dict], target_language: str = None) -> str:
     return answer
 
 
+def test_search():
+    # DOC: https://www.microsoft.com/en-us/bing/apis/bing-web-search-api
+    import os
+    from pprint import pprint
+    import requests
+
+    # Add your Bing Search V7 subscription key and endpoint to your environment variables.
+    subscription_key = os.environ["BING_SEARCH_V7_SUBSCRIPTION_KEY"]
+    endpoint = os.environ["BING_SEARCH_V7_ENDPOINT"] + "v7.0/search"
+
+    # Query term(s) to search for.
+    query = "最近十天的天气"
+
+    # Construct a request
+    mkt = "en-US"
+    params = {"q": query, "mkt": mkt}
+    headers = {"Ocp-Apim-Subscription-Key": subscription_key}
+
+    # Call the API
+    try:
+        response = requests.get(endpoint, headers=headers, params=params)
+        response.raise_for_status()
+
+        print("Headers:")
+        print(response.headers)
+
+        print("JSON Response:")
+        pprint(response.json())
+    except Exception as ex:
+        raise ex
+
+
 if __name__ == "__main__":
-    chat_history_text = """user: 我想要去旅游
-bot: 你想去哪里？
-user: 云南"""
-    target_language = None
-    result = get_related_insights(chat_history_text, target_language)
-    print(result)
-    assert result != ""
+    #     chat_history_text = """user: 我想要去旅游
+    # bot: 你想去哪里？
+    # user: 云南"""
+    #     target_language = None
+    #     result = get_related_insights(chat_history_text, target_language)
+    #     print(result)
+    #     assert result != ""
 
-    chat_history_text = """user: 我想要去旅游
-bot: 你想去哪里？
-user: 云南"""
-    target_language = None
-    result = get_related_questions(chat_history_text, target_language)
-    print(result)
-    assert result != ""
+    #     chat_history_text = """user: 我想要去旅游
+    # bot: 你想去哪里？
+    # user: 云南"""
+    #     target_language = None
+    #     result = get_related_questions(chat_history_text, target_language)
+    #     print(result)
+    #     assert result != ""
 
-    chat_history = [
-        {"content": "我想要去旅游", "sender": "user", "timestamp": "2022-01-01"},
-        {"content": "你想去哪里？", "sender": "bot", "timestamp": "2022-01-01"},
-        {"content": "云南", "sender": "user", "timestamp": "2022-01-01"},
-    ]
-    target_language = None
-    result = get_answer(chat_history, target_language)
-    print(result)
-    assert result != ""
+    #     chat_history = [
+    #         {"content": "我想要去旅游", "sender": "user", "timestamp": "2022-01-01"},
+    #         {"content": "你想去哪里？", "sender": "bot", "timestamp": "2022-01-01"},
+    #         {"content": "云南", "sender": "user", "timestamp": "2022-01-01"},
+    #     ]
+    #     target_language = None
+    #     result = get_answer(chat_history, target_language)
+    #     print(result)
+    #     assert result != ""
+
+    search()
