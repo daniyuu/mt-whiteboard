@@ -112,8 +112,8 @@ Output Format (JSON):
 
 
 def get_related_insights(chat_history_text: str) -> List[Dict]:
-    prompt = """Based on the provided chat history, generate high-quality suggestions or insights that reflect different perspectives and directions. The insights should be concise, unique, and thought-provoking, avoiding redundancy and irrelevant information. Aim for depth and specificity in each insight to inspire the user's thinking.. The language of the insights should match the language of the chat history. Please output the insights in a JSON format, where each insight is a separate item in the list. The response should only include the JSON output, and the language of the insights should be the same as the chat history.
-
+    prompt = """Based on the provided chat history, generate a mix of high-quality insights and actionable suggestions that reflect different perspectives and directions. The insights should be thought-provoking, concise, and unique, while the suggestions should be practical, specific, and directly applicable. Avoid redundancy, irrelevant information, and focus on providing value. The language of the insights and suggestions should match the language of the chat history. Please output the insights and suggestions in a JSON format, where each item is a separate entry in the list. The response should only include the JSON output, and the language of the insights and suggestions should be the same as the chat history.
+    
 Chat History:
 {0}
 
@@ -126,12 +126,11 @@ Chat History:
             + """
 Output Format (JSON):
 [
-"suggestion1",
-"suggestion2",
-"suggestion3",
 "insight1",
+"suggestion1",
 "insight2",
-"insight3",
+"suggestion2",
+...
 ]
 
 """
