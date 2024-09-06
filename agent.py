@@ -244,15 +244,37 @@ Output Format (JSON):
     return answers
 
 
-async def get_search_results(chat_history_text: str, limit: int = 3) -> List[Dict]:
+async def get_search_results(chat_history_text: str, limit: int = 5) -> List[Dict]:
     queries = get_search_keywords(chat_history_text)
     search_agent = SearchAgent()
     results = []
     for query in queries:
-        result = await search_agent.search(query)
-        results.append(result)
+        r = await search_agent.search(query)
+        webPages = r["webPages"]["value"]
+        for webPage in webPages:
+            results.append(
+                {
+                    "type": "search-webPage",
+                    "name": webPage["name"],
+                    "url": webPage["url"],
+                    "snippet": webPage["snippet"],
+                }
+            )
+
+        videos = r["videos"]["value"]
+        for video in videos:
+            results.append(
+                {
+                    "type": "search-video",
+                    "name": video["name"],
+                    "url": video["contentUrl"],
+                    "description": video["description"],
+                }
+            )
+
         if len(results) >= limit:
             break
+
     return results
 
 
@@ -308,7 +330,8 @@ async def try_get_search_results():
     whiteboard_id = WhiteboardData("aeSo4yq9ERU9pKGdX3cGEb")
     chat_history_text = await whiteboard_id.load_as_chat_history_text()
 
-    result = await get_search_results(chat_history_text)
+    result = await get_search_results(chat_history_text, limit=5)
+
     print(result)
 
 
