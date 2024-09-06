@@ -71,6 +71,13 @@ class ChatGPTAgent:
 class SearchAgent:
     def __init__(self):
         # DOC: https://www.microsoft.com/en-us/bing/apis/bing-web-search-api
+        # https://learn.microsoft.com/en-us/bing/search-apis/bing-web-search/overview
+        # https://learn.microsoft.com/en-us/bing/search-apis/bing-web-search/reference/response-objects
+        # WebAnser: https://learn.microsoft.com/en-us/bing/search-apis/bing-web-search/reference/response-objects#webanswer
+        # Entity: https://learn.microsoft.com/en-us/bing/search-apis/bing-entity-search/reference/response-objects#entityanswer
+        # Image: https://learn.microsoft.com/en-us/bing/search-apis/bing-entity-search/reference/response-objects#localentityanswer
+        # Video: https://learn.microsoft.com/en-us/bing/search-apis/bing-video-search/reference/response-objects#videosanswer
+
         self.subscription_key = os.environ["BING_SEARCH_V7_SUBSCRIPTION_KEY"]
         self.endpoint = os.environ["BING_SEARCH_V7_ENDPOINT"] + "v7.0/search"
 
