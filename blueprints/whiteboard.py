@@ -181,10 +181,6 @@ async def search_handler(request, whiteboard_id):
     whiteboard_data = WhiteboardData(whiteboard_id)
     chat_history_text = await whiteboard_data.load_as_chat_history_text()
 
-    query = request.json.get("query")
-    if not query:
-        return response.json({"error": "Query is required"}, status=400)
-
-    search_results = get_search_results(chat_history_text, query)
+    search_results = await get_search_results(chat_history_text, limit=5)
 
     return response.json({"search_results": search_results})
