@@ -11,6 +11,7 @@ from agent import (
     get_answer,
     get_answer_steaming,
     get_search_results,
+    get_search_results_summary,
 )
 from data_helper import WhiteboardData
 from models import Whiteboard
@@ -183,4 +184,11 @@ async def search_handler(request, whiteboard_id):
 
     search_results = await get_search_results(chat_history_text, limit=5)
 
-    return response.json({"search_results": search_results})
+    search_results_summary = get_search_results_summary(search_results)
+
+    return response.json(
+        {
+            "search_results": search_results,
+            "search_results_summary": search_results_summary,
+        }
+    )
