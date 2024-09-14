@@ -197,6 +197,37 @@ Output:
     return answer
 
 
+# 和Summary的内容上看是会撞车的
+def get_ai_response(chat_history: List) -> str:
+    chatgpt_agent = ChatGPTAgent()
+    answer = chatgpt_agent.chat(chat_history)
+    return answer
+
+
+def get_search_results_summary(search_results: List[Dict], top_n=5) -> str:
+    summary = ""
+    for i, result in enumerate(search_results):
+        if i >= top_n:
+            break
+        if result["type"] == "search-webPage":
+            summary += f"Title: {result['name']}\n"
+            summary += f"URL: {result['url']}\n"
+            summary += f"Snippet: {result['snippet']}\n"
+        elif result["type"] == "search-video":
+            summary += f"Title: {result['name']}\n"
+            summary += f"URL: {result['url']}\n"
+            summary += f"Description: {result['description']}\n"
+
+    prompt = """Based on the search results provided, generate a suitable response that addresses the user's query. The response should be relevant, concise, and informative, incorporating key points from the retrieved information. Aim to present the most important insights in a clear and accessible manner, and consider the user's potential needs or interests when crafting your reply. The language of the output should match the language of the search results.\n\nSearch Results:\n{0}""".format(
+        summary
+    )
+
+    chatgpt_agent = ChatGPTAgent()
+    summary = chatgpt_agent.chat([{"sender": "user", "content": prompt}])
+
+    return summary
+
+
 async def get_answer_steaming(chat_history_text: str, response) -> str:
     prompt = """Based on the provided chat history, infer the user's intent and purpose behind the conversation. Determine the most likely desired output or result that the user is seeking, such as a travel plan for travel-related discussions or an analysis report for product analysis conversations. Use the inferred intent to produce the specific high-quality output that best meets the user's needs and goals. The language of the output should match the language of the chat history. The response should directly address the inferred user intent with a complete and relevant output.
 
@@ -250,27 +281,29 @@ async def get_search_results(chat_history_text: str, limit: int = 5) -> List[Dic
     results = []
     for query in queries:
         r = await search_agent.search(query)
-        webPages = r["webPages"]["value"]
-        for webPage in webPages:
-            results.append(
-                {
-                    "type": "search-webPage",
-                    "name": webPage["name"],
-                    "url": webPage["url"],
-                    "snippet": webPage["snippet"],
-                }
-            )
+        if "webPages" in r:
+            webPages = r["webPages"]["value"]
+            for webPage in webPages:
+                results.append(
+                    {
+                        "type": "search-webPage",
+                        "name": webPage["name"],
+                        "url": webPage["url"],
+                        "snippet": webPage["snippet"],
+                    }
+                )
 
-        videos = r["videos"]["value"]
-        for video in videos:
-            results.append(
-                {
-                    "type": "search-video",
-                    "name": video["name"],
-                    "url": video["contentUrl"],
-                    "description": video["description"],
-                }
-            )
+        if "videos" in r:
+            videos = r["videos"]["value"]
+            for video in videos:
+                results.append(
+                    {
+                        "type": "search-video",
+                        "name": video["name"],
+                        "url": video["contentUrl"],
+                        "description": video["description"],
+                    }
+                )
 
         if len(results) >= limit:
             break
@@ -335,6 +368,29 @@ async def try_get_search_results():
     print(result)
 
 
+async def try_get_search_with_ai_summary():
+    from data_helper import WhiteboardData
+
+    whiteboard_id = WhiteboardData("aeSo4yq9ERU9pKGdX3cGEb")
+    chat_history_text = await whiteboard_id.load_as_chat_history_text()
+
+    result = await get_search_results(chat_history_text, limit=5)
+
+    summary = get_search_results_summary(result)
+
+    print(summary)
+
+
+async def try_ai_response():
+    from data_helper import WhiteboardData
+
+    whiteboard_id = WhiteboardData("aeSo4yq9ERU9pKGdX3cGEb")
+    chat_history = await whiteboard_id.load_as_chat_history()
+
+    result = get_ai_response(chat_history)
+    print(result)
+
+
 if __name__ == "__main__":
     #     chat_history_text = """user: 我想要去旅游
     # bot: 你想去哪里？
@@ -366,5 +422,5 @@ if __name__ == "__main__":
     # run async test_related_insights
 
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(try_get_search_results())
+    loop.run_until_complete(try_get_search_with_ai_summary())
     loop.close()
