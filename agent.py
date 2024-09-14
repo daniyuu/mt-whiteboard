@@ -94,14 +94,7 @@ class SearchAgent:
                     self.endpoint, headers=headers, params=params
                 ) as response:
                     response.raise_for_status()
-
-                    print("Headers:")
-                    print(response.headers)
-
-                    print("JSON Response:")
-
                     result = await response.json()
-                    pprint(result)
             except Exception as ex:
                 raise ex
 
