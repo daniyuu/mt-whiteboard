@@ -1,4 +1,5 @@
 from contextvars import ContextVar
+import os
 
 from sanic import Sanic, response
 from sanic.log import logger
@@ -40,8 +41,6 @@ async def setup_db(app, loop):
 
 @app.listener("before_server_start")
 async def init_whiteboard_data_folder(app, loop):
-    import os
-
     if not os.path.exists("whiteboard_data"):
         os.makedirs("whiteboard_data")
 
@@ -56,4 +55,6 @@ async def health(request: Request):
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8000)
+    # Get the port from the environment variable, default to 8000 if not set
+    port = int(os.getenv("SERVICE_PORT", 8000))
+    app.run(host="0.0.0.0", port=port)

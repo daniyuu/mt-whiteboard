@@ -6,7 +6,7 @@
   "configurations": [
     {
       "name": "Python Debugger: Current File",
-      "type": "debugpy",
+      "type": "python",
       "request": "launch",
       "program": "${file}",
       "console": "integratedTerminal",
@@ -16,7 +16,7 @@
     },
     {
       "name": "Python: pytest",
-      "type": "debugpy",
+      "type": "python",
       "request": "launch",
       "module": "pytest", // Run pytest as a module
       "args": [
@@ -30,7 +30,7 @@
     },
     {
       "name": "Python: Debug test_model.py",
-      "type": "debugpy",
+      "type": "python",
       "request": "launch",
       "module": "pytest", // Run pytest as a module
       "args": [
@@ -41,6 +41,44 @@
       "env": {
         "PYTHONPATH": "${workspaceFolder}" // Ensure your project root is in PYTHONPATH
       }
-    }
+    },
+    {
+      "name": "Python: Debug test_agent.py",
+      "type": "python",
+      "request": "launch",
+      "module": "pytest",
+      "args": [
+        "tests/test_agent.py"
+      ],
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      }
+    },
+    {
+      "name": "Python: Run Server",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/app.py",
+      "console": "integratedTerminal",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      }
+    },
+    {
+      "name": "Python: Debug test_search_agent.py",
+      "type": "python",
+      "request": "launch",
+      "module": "pytest",
+      "args": [
+        "tests/test_search_agent.py"
+      ],
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      }
+    },
   ]
 }

@@ -9,35 +9,57 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from langchain_openai import AzureChatOpenAI
-from langchain_core.messages import AIMessage, HumanMessage
-from langchain_core.output_parsers import StrOutputParser
+from openai import AzureOpenAI
+import base64
 
 from message import Message, Sender
 
 
 class ChatGPTAgent:
     def __init__(self):
-        self.model = AzureChatOpenAI(
-            azure_endpoint=os.environ["AZURE_OPENAI_ENDPOINT"],
-            azure_deployment=os.environ["AZURE_OPENAI_DEPLOYMENT_NAME"],
-            openai_api_version=os.environ["AZURE_OPENAI_API_VERSION"],
+        self.endpoint = os.getenv("ENDPOINT_URL", "https://hackthon-copilotinreality.openai.azure.com/")
+        self.deployment = os.getenv("DEPLOYMENT_NAME", "gpt-4o")
+        self.subscription_key = os.getenv("AZURE_OPENAI_API_KEY")
+
+        self.client = AzureOpenAI(
+            azure_endpoint=self.endpoint,
+            api_key=self.subscription_key,
+            api_version="2024-05-01-preview",
         )
 
     def invoke(self, messages: List[Message] = None) -> Message:
         if messages is None:
             messages = []
-        _messages = [
-            (
-                HumanMessage(content=msg.content)
-                if msg.sender == Sender.HUMAN
-                else AIMessage(content=msg.content)
-            )
+        chat_prompt = [
+            {
+                "role": "system",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": "You are an AI assistant that helps people find information."
+                    }
+                ]
+            }
+        ]
+
+        messages = chat_prompt + [
+            {"role": "user" if msg.sender == Sender.HUMAN else "assistant", "content": msg.content}
             for msg in messages
         ]
-        parser = StrOutputParser()
-        result = parser.invoke(self.model.invoke(_messages))
-        result_message = Message(content=result, sender=Sender.CHATGPT)
+
+        completion = self.client.chat.completions.create(
+            model=self.deployment,
+            messages=messages,
+            max_tokens=800,
+            temperature=0.7,
+            top_p=0.95,
+            frequency_penalty=0,
+            presence_penalty=0,
+            stop=None,
+            stream=False
+        )
+
+        result_message = Message(content=completion.choices[0].message.content, sender=Sender.CHATGPT)
 
         return result_message
 
@@ -56,16 +78,37 @@ class ChatGPTAgent:
                 Message(content=msg["content"], sender=Sender.HUMAN) for msg in messages
             ]
 
-        _messages = [
-            (
-                HumanMessage(content=msg.content)
-                if msg.sender == Sender.HUMAN
-                else AIMessage(content=msg.content)
-            )
+        chat_prompt = [
+            {
+                "role": "system",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": "You are an AI assistant that helps people find information."
+                    }
+                ]
+            }
+        ]
+
+        messages = chat_prompt + [
+            {"role": "user" if msg.sender == Sender.HUMAN else "assistant", "content": msg.content}
             for msg in messages
         ]
-        async for chunk in self.model.astream(_messages):
-            yield chunk.content
+        for chunk in self.client.chat.completions.create(
+            model=self.deployment,
+            messages=messages,
+            max_tokens=800,
+            temperature=0.7,
+            top_p=0.95,
+            frequency_penalty=0,
+            presence_penalty=0,
+            stop=None,
+            stream=True
+        ):
+            content = ""
+            if len(chunk.choices) > 0:
+                content = chunk.choices[0].delta.content
+            yield content
 
 
 class SearchAgent:
