@@ -3,8 +3,6 @@ sanic-cors
 uvicorn
 aiosqlite
 shortuuid
-langchain_openai
-langchain_core
 python-dotenv
 networkx
 pytest
@@ -13,3 +11,4 @@ sqlalchemy[asyncio]
 aiofiles
 aiohttp
 pytest
+openai
