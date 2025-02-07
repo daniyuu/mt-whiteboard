@@ -94,8 +94,21 @@ class ChatGPTAgent:
             {"role": "user" if msg.sender == Sender.HUMAN else "assistant", "content": msg.content}
             for msg in messages
         ]
-        async for chunk in self.model.astream(messages):
-            yield chunk.content
+        for chunk in self.client.chat.completions.create(
+            model=self.deployment,
+            messages=messages,
+            max_tokens=800,
+            temperature=0.7,
+            top_p=0.95,
+            frequency_penalty=0,
+            presence_penalty=0,
+            stop=None,
+            stream=True
+        ):
+            content = ""
+            if len(chunk.choices) > 0:
+                content = chunk.choices[0].delta.content
+            yield content
 
 
 class SearchAgent:
